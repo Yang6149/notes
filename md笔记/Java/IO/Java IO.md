@@ -549,3 +549,23 @@ public class NIOClient {
 }
 ```
 
+### 内存映射文件
+
+内存映射文件 I/O 是一种读和写文件数据的方法，它可以比常规的基于流或者基于通道的 I/O 快得多。
+
+向内存映射文件写入可能是危险的，只是改变数组的单个元素这样的简单操作，就可能会直接修改磁盘上的文件。修改数据与将数据保存到磁盘是没有分开的。
+
+下面代码行将文件的前 1024 个字节映射到内存中，map() 方法返回一个 MappedByteBuffer，它是 ByteBuffer 的子类。因此，可以像使用其他任何 ByteBuffer 一样使用新映射的缓冲区，操作系统会在需要时负责执行映射。
+
+```java
+MappedByteBuffer mbb = fc.map(FileChannel.MapMode.READ_WRITE, 0, 1024);
+```
+
+### 对比
+
+NIO 与普通 I/O 的区别主要有以下两点：
+
+- NIO 是非阻塞的；
+- NIO 面向块，I/O 面向流。
+
+# 
