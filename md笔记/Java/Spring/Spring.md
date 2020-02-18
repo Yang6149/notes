@@ -87,11 +87,11 @@ public class LogAspect {
 
 
 
-* Spring首先会扫描解析指定位置的所有的类得到Resources（可以理解为.Class文件）
+* Spring 首先会扫描解析指定位置的所有的类得到 Resources（可以理解为.Class文件）
 
-  然后依照TypeFilter和@Conditional注解决定是否将这个类解析为BeanDefinition
+  然后依照 TypeFilter 和 @Conditional 注解决定是否将这个类解析为 BeanDefinition
 
-  稍后再把一个个BeanDefinition取出实例化成Bean
+  稍后再把一个个 BeanDefinition 取出实例化成 Bean
 
   ![](https://pic4.zhimg.com/80/v2-8c6f9d8294aeffe91a8eeb711fcf83bf_hd.jpg)
 

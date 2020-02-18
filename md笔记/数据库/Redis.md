@@ -1,4 +1,4 @@
-# cRedis
+# Redis
 
 ## 一、概述
 
