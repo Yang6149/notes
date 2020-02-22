@@ -165,6 +165,8 @@ public static void main(String[] args) {
 
  Thread.sleep(millisec) 方法会休眠当前正在执行的线程，millisec 单位为毫秒。 
 
+**等于告诉操作系统未来 millisec  毫秒内不参与 CPU 竞争**
+
  sleep() 可能会抛出 InterruptedException，因为异常不能跨线程传播回 main() 中，因此必须在本地进行处理。线程中抛出的其它异常也同样需要在本地进行处理。 
 
 ```java
@@ -302,6 +304,10 @@ future.cancel(true);
  Java 提供了两种锁机制来控制多个线程对共享资源的互斥访问，第一个是 JVM 实现的 synchronized，而另一个是 JDK 实现的 ReentrantLock。 
 
 ### synchronized
+
+1.6 之前：重量级锁：用户态--》调用操作系统函数内核态
+
+1.7 之后：锁优化
 
 1. 同步一个代码块
 
