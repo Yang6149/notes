@@ -307,13 +307,33 @@ static final int tableSizeFor(int cap) {
 }
 ```
 
-## 8. 链表转红黑树
-
- 从 JDK 1.8 开始，一个桶存储的链表长度大于等于 8 时会将链表转换为红黑树。 
-
-## 9. 与 Hashtable 的比较
+## 8. 与 Hashtable 的比较
 
 * Hashtable 使用 synchronized 来进行同步。
 * HashMap 可以插入键为 null 的 Entry
 * HashMap 的迭代器是 fail-fast 迭代器
 * HashMap 不能保证随着时间的推移 Map 中的元素次序是不变的。
+
+# HashMap 1.8
+
+## 1.7 的缺陷
+
+### 碰撞严重
+
+可以使用精心设计的参数来构造一个HashMap内的链表，严重拖慢查询速度 引用 Tomcat 邮件组的讨论
+
+### 死锁问题
+
+[coolshell](https://coolshell.cn/articles/9606.html) 
+
+## 链表转化为红黑树
+
+有一个参数为 TREEIFY_SHRESHOLD =8
+
+在一个 bucket 后节点数为 8 的情况下，链表转化为红黑树。
+
+因为在随机值插入 hashMap 当中时，每个 bin 中节点的数量符合参数 k = 5 的泊松分布。在一个 bin 中节点数大于 8 的概率小于百万分之一。用于防止恶意攻击或意外
+
+### 关于死锁问题
+
+1.8 保证了 rehash 时节点的顺序，避免了循环，但还是非线程安全的。

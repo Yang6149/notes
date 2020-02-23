@@ -91,7 +91,20 @@ java -Xms1M -Xmx2M HackTheJava
 
 ### 直接内存
 
- 在 JDK 1.4 中新引入了 NIO 类，它可以使用 Native 函数库直接分配堆外内存，然后通过 Java 堆里的 DirectByteBuffer 对象作为这块内存的引用进行操作。这样能在一些场景中显著提高性能，因为避免了在堆内存和堆外内存来回拷贝数据。 
+ 在 JDK 1.4 中新引入了 NIO 类，它可以使用 Native 函数库直接分配堆外内存，然后通过 Java 堆里的 DirectByteBuffer 对象作为这块内存的引用进行操作。这样能在一些场景中显著提高性能，因为避免了在堆内存和堆外内存来回拷贝数据。
+
+### 内存屏障
+
+volatile 相关实现、
+
+  当我们声明某个变量为 volatile 修饰时，这个变量就有了线程可见性，volatile 通过在读写操作前后添加内存屏障。 
+
+volatile 型变量拥有如下特性
+
+```
+1.可见性，对于一个该变量的读，一定能看到读之前最后的写入。
+2.原子性，对volatile变量的读写具有原子性，即单纯读和写的操作，都不会受到干扰。
+```
 
 ## 二、垃圾收集
 
@@ -315,7 +328,7 @@ obj = null;
 
 在注重吞吐量以及 CPU 资源敏感的场合，都可以优先考虑 Parallel Scavenge 加 Parallel Old 收集器。
 
-#### 6. CMS 收集器
+#### 6. CMS 收集器 JDK9 移除
 
  ![img](https://camo.githubusercontent.com/2eb375354cc7b06ee58cbc8a1aa7b18907208d91/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f36326537373939372d363935372d346236382d386431322d6266643630396262326336382e6a7067) 
 
@@ -365,6 +378,22 @@ obj = null;
 
 - 空间整合：整体来看是基于 “标记 - 整理” 算法实现的收集器，从局部（两个 Region 之间）上来看是基于 “复制” 算法实现的，这意味着运行期间不会产生内存空间碎片。
 - 可预测的停顿：能让使用者明确指定在一个长度为 M 毫秒的时间片段内，消耗在 GC 上的时间不得超过 N 毫秒。
+
+可以设置最大的 STW 停顿时间
+
+* -XX:MaxGCPauseMillis=N
+* 250 by default
+
+年轻代 GC 算法
+
+* STW，Parallel，Copying
+
+老年代 GC 算法
+
+* Mostly-concurrent marking （vs CMS）
+* Incremental compaction
+
+
 
 ## 三、内存分配与回收策略
 
