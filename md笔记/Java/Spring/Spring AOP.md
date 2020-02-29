@@ -13,4 +13,17 @@
 
 Spring AOP 2.5 语法复杂，所以借助了 AspectJ 的语法
 
-代理对象在init spring初始化的时候就已经存在了，而不是使用getBean调用的时候创建，getBean本质是调用了getSingleton(beanName)
+代理对象在init spring初始化的时候就已经存在了，而不是使用getBean调用的时候创建，getBean本质是调用了getSingleton(beanName)，有的话返回、没有调用 doCreateBean
+
+```java
+doCreateBean(){
+    //创建目标对象
+    //创建代理对象并返回
+}
+```
+
+```java
+wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean,beanName)
+```
+
+通过一个 bean 循环扫描一系列beanPostProcessor的实现类，选一个进行处理，并返回一个代理对象具体方法为 cglib或jdk动态代理 如果bean有接口的话用动态代理、如果没有接口的话使用cglib
