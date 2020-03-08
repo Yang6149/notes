@@ -1,14 +1,22 @@
-# 记录 Docker 安装防忘
+# 记录 Docker 安装防迷路
 
 ### 第一步、官方安装 Docker
 
-具体看官方文档，官方是真滴烂
+具体看官方文档
+
+记得更新 yum
+
+```
+sudo yum update
+```
 
  https://docs.docker.com/install/linux/docker-ce/centos/ 
 
 
 
+可是官方太烂，无脑下载看这个
 
+ https://qizhanming.com/blog/2019/01/25/how-to-install-docker-ce-on-centos-7 
 
 ### 第二部、配置国内镜像
 
@@ -26,4 +34,8 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl restart docker
 ```
+
+### mysql 的安装
+
+ https://www.jianshu.com/p/10769f985516 
 
