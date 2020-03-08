@@ -21,6 +21,7 @@ docker run \
 在 conf 下创建 my.cnf
 
 ```
+[mysqld]
 ## 同一局域网内注意要唯一
 server-id=100  
 ## 开启二进制日志功能，可以随便取（关键）
@@ -55,7 +56,7 @@ relay_log=edu-mysql-relay-bin
 ```sql
 stop slave;
 
-change master to master_host='192.168.23.129', master_user='slave', master_password='123456', master_port=3306, master_log_file='mysql-bin.000001', master_log_pos= 2830, master_connect_retry=30;
+change master to master_host='192.168.23.129', master_user='slave', master_password='123456', master_port=3306, master_log_file='mysql-bin.000001', master_log_pos= 0, master_connect_retry=30;
 
 start slave;
 
@@ -69,3 +70,13 @@ show slave status;
 配置这个东西配了超级久，网上配置每一个相同的，还是自己摸索出来一个，记下来防迷路。
 
 只是完成了一个功能，但 linux 操作越来越熟了，挺开心的。
+
+
+
+## 利用maxScale 进行读写分离
+
+ https://www.jianshu.com/p/70d94a8f6491 
+
+
+
+最后一步连接 maxScale 时 需要关闭 proxy 的防火墙

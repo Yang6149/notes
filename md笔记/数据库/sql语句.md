@@ -83,7 +83,7 @@
      `INSERT INTO 表名(列名，列名..)VALUES('','',..);`
      
 * 插入检索出的数据
-     
+  
      ```sq
      INSERT INTO mytable1(col1, col2)
      SELECT col1, col2
@@ -91,7 +91,7 @@
      ```
      
 * 插入整个表的内容
-     
+  
      ```sql
      CREATE TABLE newtable AS
      SELECT * FROM mytable;
