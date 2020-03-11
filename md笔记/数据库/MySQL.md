@@ -374,3 +374,37 @@ MySQL 提供了 FROM_UNIXTIME() 函数把 UNIX 时间戳转换为日期，并提
 读写分离常用代理方式来实现，代理服务器接收应用层传来的读写请求，然后决定转发到哪个服务器。 
 
 ![](https://camo.githubusercontent.com/ff6ad220f8fcad4c96fdf5415c2ada0aa94c16f1/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f6d61737465722d736c6176652d70726f78792e706e67)
+
+## 七、行级锁、间隙锁、表级锁
+
+**行级锁**：
+
+```sql
+START TRANSACTION;
+SELECT * FROM t_blog WHERE id=30 FOR UPDATE;#排他锁
+
+SELECT * FROM t_blog WHERE id = 26 LOCK IN SHARE MODE;#共享锁
+
+UPDATE t_blog SET views=6 WHERE type_id=3 ;
+```
+
+通过明确指定索引（等于号）来进行操作的全都是行级锁。不管是不是聚簇索引和非聚簇索引
+
+update、save、delete 都是排他锁
+
+**间隙锁**：
+
+```sql
+SELECT * FROM t_blog WHERE id>30 FOR UPDATE;#排他锁
+```
+
+**表锁**：
+
+通过非索引查找的的操作会对全表进行加锁
+
+```sql
+UPDATE t_blog SET views=6 WHERE views=5 ;
+```
+
+
+
