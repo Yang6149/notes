@@ -324,6 +324,8 @@ static final int tableSizeFor(int cap) {
 
 ### 死锁问题
 
+ ![img](https://coolshell.cn/wp-content/uploads/2013/05/HashMap02.jpg) 
+
 [coolshell](https://coolshell.cn/articles/9606.html) 
 
 ## 链表转化为红黑树
