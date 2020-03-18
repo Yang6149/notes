@@ -26,4 +26,12 @@ doCreateBean(){
 wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean,beanName)
 ```
 
-通过一个 bean 循环扫描一系列beanPostProcessor的实现类，选一个进行处理，并返回一个代理对象具体方法为 cglib或jdk动态代理 如果bean有接口的话用动态代理、如果没有接口的话使用cglib
+通过一个 bean 循环扫描一系列beanPostProcessor的实现类，选一个进行处理，并返回一个代理对象具体方法为 cglib或jdk动态代理 如**果bean有接口的话用动态代理、如果没有接口的话使用cglib**
+
+### JDK Proxy
+
+如果一个类实现了一个接口，那么默认使用的是 jdk proxy 的方法，通过实现一个实现相同接口的类来代理目标类。
+
+### cglib
+
+cglib 动态代理是利用 asm 开源包，对代理对象类的 Class 文件进行加载，通过修改其字节码生成子类来处理。
