@@ -14,7 +14,7 @@
 
 64位：
 
-![1584350732526](C:\Users\hasaki\AppData\Roaming\Typora\typora-user-images\1584350732526.png)
+![1584350732526](https://raw.githubusercontent.com/Yang6149/typora-image/master/demo/202003/29/223804-919554.png)
 
 Mark Word用于存储对象自身的运行时数据，如哈希码(HashCode)、GC分代年龄、锁状态标志、线程持有的 锁、偏向线程 ID、偏向时间戳等等。Java对象头一般占有两个机器码(在32位虚拟机中，1个机器码等于4字节， 也就是32bit)
 
@@ -52,3 +52,4 @@ Monitor 可以理解为一个同步工具或一种同步机制，通常被描述
 ## 5.重量锁
 
 从用户态到内核态，去挂起线程。
+

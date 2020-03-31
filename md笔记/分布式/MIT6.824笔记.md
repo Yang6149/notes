@@ -45,3 +45,5 @@ this is a simple Word Count process by MapReduce
 The Map k could be the title,it's not important .And the Map V could be the content ,we put the k/v to map ,then we get a table .
 
 The Reduce k coule be a vector. Then we can get the number of the word.
+
+![1584586954470](https://raw.githubusercontent.com/Yang6149/typora-image/master/demo/202003/19/110241-839054.png)

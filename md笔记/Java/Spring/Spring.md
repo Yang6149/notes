@@ -27,6 +27,10 @@ public class BlogServiceImpl implements BlogService{
 
  通俗地讲，它一般被用来解决一些系统交叉业务的织入，比如日志啦、事务啥的。 
 
+方法：jdk 动态代理 ，cglib 使用字节码的编辑器，生成一个目标类的子类，去实现代理功能，
+
+cglib 生成慢，运行块。
+
  做法是将切面代码移动到原始方法的周围： 
 
 ![](https://pic1.zhimg.com/80/v2-3ede7765f60cf2bacd36afe2fe874824_hd.jpg)
