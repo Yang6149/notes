@@ -1,5 +1,7 @@
 # Raft
 
+<http://thesecretlivesofdata.com/raft/>神仙描述
+
 ## 一、intro
 
 1. 保持 replicated log  一致
