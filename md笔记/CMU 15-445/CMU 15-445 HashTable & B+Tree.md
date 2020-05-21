@@ -131,3 +131,11 @@ B+树是一个 M-Way 平衡搜索树，区别与B-树只有子节点保存数据
 
 查询所需要的所有属性都在索引当中，当然要遵循最左原则，因为根据索引排序有优先级，先根据最左边的索引排。类比Stringbi大小。
 
+### 6. Trie Index 和 Radix Tree
+
+![img](https://upload-images.jianshu.io/upload_images/10803273-8df9472eaa3730a7.png?imageMogr2/auto-orient/strip|imageView2/2/w/1200/format/webp)
+
+![img](https://upload-images.jianshu.io/upload_images/10803273-864a36c671ccf97d.png?imageMogr2/auto-orient/strip|imageView2/2/w/1200/format/webp)
+
+![img](https://upload-images.jianshu.io/upload_images/10803273-30d7f6d8202fce3f.png?imageMogr2/auto-orient/strip|imageView2/2/w/1200/format/webp)
+
