@@ -163,12 +163,21 @@ JMM把happens-before要求禁止的重排序分为了下面两类。
 
 **定义：**
 
-1. 程序顺序规则：一个线程中的每个操作，happens-before于该线程中的任意后续操作。 
-2. 监视器锁规则：对一个锁的解锁，happens-before于随后对这个锁的加锁。 
-3. volatile变量规则：对一个volatile域的写，happens-before于任意后续对这个volatile域的读。 
-4. 传递性：如果A happens-before B，且B happens-before C，那么A happens-before C。 
-5. start()规则：如果线程A执行操作ThreadB.start()（启动线程B），那么A线程的ThreadB.start()操作happens-before于线程B中的任意操作。 
-6. join()规则：如果线程A执行操作ThreadB.join()并成功返回，那么线程B中的任意操作happens-before于线程A从ThreadB.join()操作成功返回
+1. If *x* and *y* are actions of the same thread and *x* comes before *y* in program order, then *hb(x, y)*.
+2. There is a *happens-before* edge from the end of a constructor of an object to the start of a finalizer ([§12.6](https://docs.oracle.com/javase/specs/jls/se8/html/jls-12.html#jls-12.6)) for that object.
+3. If an action *x* ***synchronizes-with*** a following action *y*, then we also have *hb(x, y)*.
+4. If *hb(x, y)* and *hb(y, z)*, then *hb(x, z)*.
+
+**Synchronizes-with**
+
+Synchronization actions induce the ***synchronized-with*** relation on actions, defined as follows:
+
+- An unlock action on monitor *m* *synchronizes-with* all subsequent lock actions on *m* (where "subsequent" is defined according to the synchronization order).
+- volatile 读写，不多说
+- An action that starts a thread *synchronizes-with* the first action in the thread it starts.
+- 各个变量初始化默认值  synchronized-with  线程执行第一个指令
+- 如果线程1发现线程2 terminated，线程2 synchronized-with 线程1
+- If thread `T1` interrupts thread `T2`, the interrupt by `T1` *synchronizes-with* any point where any other thread (including `T2`) determines that `T2` has been interrupted (by having an `InterruptedException` thrown or by invoking `Thread.interrupted` or `Thread.isInterrupted`).
 
 ### 3.8 双重检查锁问题
 
@@ -202,4 +211,11 @@ JMM把happens-before要求禁止的重排序分为了下面两类。
 
 1. JMM 是什么？
 
-JMM 是控制 Java 线程之间通信的一个模型。主要是为了在提高性能的前提下，解决指令重排导致的执行结果不一致和线程间的可见性的问题。它屏蔽了底层复杂的实现过程，定义了一个 happens-before原则规范，来帮助我们解决这些问题。happens-before原则就是，在单线程内环境下，遵循 as-if-serial ，在不违背原则的情况下进行指令重排，通过 volatile 或 synchronized 进行规定它的 happens-before的顺序，然后在多线程状态下通过它的传递性来实现多线程状态下的 happens-before。
+Java内存模型，是java虚拟机规范中所定义的一种内存模型，Java内存模型是标准化的，屏蔽掉了底层不同计算机的区别。主要是为了在提高性能的前提下，解决指令重排导致的执行结果不一致和线程间的可见性的问题。它屏蔽了底层复杂的实现过程，定义了一个 happens-before原则规范，来帮助我们解决这些问题。happens-before原则就是，在单线程内环境下，遵循 as-if-serial ，在不违背原则的情况下进行指令重排，通过 volatile 或 synchronizes-with 进行规定它的 happens-before的顺序，然后在多线程状态下通过它的传递性来实现多线程状态下的 happens-before。
+
+
+
+
+
+- 
+

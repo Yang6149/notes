@@ -69,14 +69,18 @@ public Vector() {
 
 ```java
 List<String> list = new ArrayList<>();
-List<String> synList = Collections.synchronizedList(list);
+List<String> synList = Collections.synchronizedList(list);//只是包装一下
 ```
 
- 也可以使用 concurrent 并发包下的 CopyOnWriteArrayList 类。 
+ ![1592642904286](C:\Users\hasaki\AppData\Roaming\Typora\typora-user-images\1592642904286.png)
+
+也可以使用 concurrent 并发包下的 CopyOnWriteArrayList 类。 
 
 ```
 List<String> list = new CopyOnWriteArrayList<>();
 ```
+
+
 
 # CopyOnWriteArrayList
 

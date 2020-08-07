@@ -2,7 +2,7 @@
 
 在1.6之后引入了偏向锁和锁升级
 
-![1584349226059](C:\Users\hasaki\AppData\Roaming\Typora\typora-user-images\1584349226059.png)
+![1584349226059](https://raw.githubusercontent.com/Yang6149/typora-image/master/demo/202006/11/001047-446896.png)
 
 ## 1. Java 头对象和 Monitor
 
@@ -22,11 +22,40 @@ Mark Word用于存储对象自身的运行时数据，如哈希码(HashCode)、G
 
 Monitor 可以理解为一个同步工具或一种同步机制，通常被描述为一个对象。每一个 Java 对象就有一把看不见的锁，称为内部锁或者 Monitor 锁。
 
+对于synchronized语句当Java源代码被javac编译成bytecode的时候，会在同步块的入口位置和退出位置分别插入monitorenter和monitorexit字节码指令。
+
+**monitor 依赖于 操作系统的 Mutex Lock，需要进入内核态，会消耗一些cpu资源。**
+
+
+
+synchronize 同步方法实现synchronized 方法会被翻译成普通的方法调用和返回指令如: invokevirtual、areturn 指令，在 VM 字节码层面并没有任何特别的指令来实现被 synchronized 修饰的方法，而是在 Class 文件的方法表中将该方法的 access_flags 字段中的 synchronized 标志位置 1，表示该方法是同步方法并使用调用该方法的对象或该方法所属的 Class 在 JVM 的内部对象表示 Klass 做为锁对象。
+
+```java
+public synchronized void syncTask();
+    descriptor: ()V
+    //方法标识ACC_PUBLIC代表public修饰，ACC_SYNCHRONIZED指明该方法为同步方法
+    flags: ACC_PUBLIC, ACC_SYNCHRONIZED
+    Code:
+      stack=3, locals=1, args_size=1
+```
+
+从字节码中可以看出，synchronized 修饰的方法并没有 monitorenter 指令和 monitorexit 指令，取得代之的确实是 ACC_SYNCHRONIZED 标识，该标识指明了该方法是一个同步方法，JVM 通过该 ACC_SYNCHRONIZED 访问标志来辨别一个方法是否声明为同步方法，从而执行相应的同步调用。这便是 synchronized 锁在同步代码块和同步方法上实现的基本原理。
+
 ## 2. 无锁
 
 无锁是指没有对资源进行锁定，所有的线程都能访问并修改同一个资源，但同时只有一个线程能修改成功。
 
 无锁的特点是修改操作会在循环内进行，线程会不断的尝试修改共享资源。如果没有冲突就修改成功并退出，否则就会继续循环尝试。如果有多个线程修改同一个值，必定会有一个线程能修改成功，而其他修改失败的线程会不断重试直到修改成功。
+
+**轻量锁**
+
+当代码进入同步块时，如果同步对象为无锁状态时，当前线程会在栈帧中创建一个锁记录(`Lock Record`)区域，同时将锁对象的对象头中 `Mark Word` 拷贝到锁记录中，再尝试使用 `CAS` 将 `Mark Word` 更新为指向锁记录的指针。
+
+如果更新**成功**，当前线程就获得了锁。
+
+如果更新**失败** `JVM` 会先检查锁对象的 `Mark Word` 是否指向当前线程的锁记录。
+
+
 
 ## 3. 偏向锁
 
@@ -56,4 +85,3 @@ Monitor 可以理解为一个同步工具或一种同步机制，通常被描述
 ## 5.重量锁
 
 从用户态到内核态，去挂起线程。
-

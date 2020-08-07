@@ -1,235 +1,84 @@
-# Spring Bean 解析注册
+# 容器
 
-1. 读取 XML 配置文件
-2. XML 文件解析为 document 文档
-3. 解析 bean
-4. 注册 bean
-5. 实例化 bean
-6. 获取 bean
+Spring 提供了两种容器类型：
 
-## 1. 读取 XML 配置文件
+BeanFactory 和 ApplicationContext
 
-查看源码第一步是找到程序入口，再以入口为突破口，一步步进行源码跟踪。
+### BeanFactory
 
-Java Web 应用中的入口就是 web.xml
+基础类型IoC容器，默认懒加载。容器初始化速度快，资源少。
 
-在 web.xml 找到 ContextLoaderListener，此 Listener 负责初始化 Spring IoC
+### ApplicationContext
 
-contextConfigLocation 参数设置了 bean 定义文件地址。
+基于BeanFactory 实现，支持时间发布、国际化信息支持等。默认容器启动时全部初始化，初始化慢、花费资源多。
 
-```xml
-<listener>
-    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
-</listener>
-<context-param>
-    <param-name>contextConfigLocation</param-name>
-    <param-value>classpath*:spring.xml</param-value>
-</context-param>
-```
 
- 下面是ContextLoaderListener的官方定义： 
 
-> public class ContextLoaderListener extends ContextLoader implements ServletContextListener
-> Bootstrap listener to start up and shut down Spring's root WebApplicationContext. Simply delegates to ContextLoader as well as to ContextCleanupListener.
-> [https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/context/ContextLoaderListener.html](https://link.zhihu.com/?target=https%3A//docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/context/ContextLoaderListener.html)
+BeanDefinition 是用来描述一个Bean的信息的接口
 
- 翻译过来 ContextLoaderListener 作用就是负责启动和关闭 Spring root WebApplicationContext。 
+BeanDefinitionRegistry是用来注册(保存)一个bean信息的接口
 
- 具体WebApplicationContext是什么？开始看源码。 
+![1594626857685](https://raw.githubusercontent.com/Yang6149/typora-image/master/demo/202007/13/155419-436921.png)
 
-```java
-package org.springframework.web.context;
-public class ContextLoaderListener extends ContextLoader implements ServletContextListener {
-    public ContextLoaderListener() {
-    }
-    public ContextLoaderListener(WebApplicationContext context) {
-        super(context);
-    }
-    //servletContext初始化时候调用
-    public void contextInitialized(ServletContextEvent event) {
-        this.initWebApplicationContext(event.getServletContext();
-    }
-    //servletContext销毁时候调用
-    public void contextDestroyed(ServletContextEvent event) {
-        this.closeWebApplicationContext(event.getServletContext());
-    }
-}
-```
+# 容器组装
 
- 从源码看出此Listener主要有两个函数，一个负责初始化WebApplicationContext，一个负责销毁。 
+![1594633439006](https://raw.githubusercontent.com/Yang6149/typora-image/master/demo/202007/13/174401-20545.png)
 
- 继续看initWebApplicationContext函数。 
+### 1. 容器启动阶段
 
-```java
-public WebApplicationContext initWebApplicationContext(ServletContext servletContext) {
-//初始化Spring容器时如果发现servlet 容器中已存在根Spring容根器则抛出异常，证明rootWebApplicationContext只能有一个。
-   if (servletContext.getAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE) != null) {
-      throw new IllegalStateException(
-            "Cannot initialize context because there is already a root application context present - " +
-            "check whether you have multiple ContextLoader* definitions in your web.xml!");
-   }
-   if (this.context == null) {
-	//1.创建webApplicationContext实例
-        this.context = createWebApplicationContext(servletContext);
-   }
-   if (this.context instanceof ConfigurableWebApplicationContext) {
-        ConfigurableWebApplicationContext cwac = (ConfigurableWebApplicationContext) this.context;
-	 //2.配置WebApplicationContext
-        configureAndRefreshWebApplicationContext(cwac, servletContext);
-    }
-    //把生成的webApplicationContext 设置为root webApplicationContext。
-    servletContext.setAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, this.context);
-    return this.context; 
+加载configuration metadata，
 
-}
-```
+1. 代码方式
+2. BeanDefinitionReader 对 configuration metadata进行解析和分析，生成BeanDefinition，然后把这些保存了Bean信息的 BeanDefinition 注册到 BeanDefinitionRegistry。
 
-在上面的代码中主要有两个功能：
 
-- （1）创建WebApplicationContext实例。
-- （2）配置生成WebApplicationContext实例。
 
-### 1.1 创建 WebApplicationContext 实例
+### 2. Bean 实例化阶段
 
-进入 CreateWebApplicationContext 函数
+经过第一阶段，所有的bean信息都通过BeanDefinition的方式注册到了BeanDefinitionRegistry中。当某个请求通过容器的getBean方法明确地请求某个对象，或者因依赖关系需要隐式地调用getBean时，触发实例化阶段。
 
-```java
-protected WebApplicationContext createWebApplicationContext(ServletContext sc) {
-   //得到ContextClass类,默认实例化的是XmlWebApplicationContext类
-   Class<?> contextClass = determineContextClass(sc);
-   //实例化Context类
-   return (ConfigurableWebApplicationContext) BeanUtils.instantiateClass(contextClass);
-}
-```
+容器会首先检查该Bean是否已经初始化，如果没有，就根据BeanDefinition所提供地信息实例化被请求对象，并为其注入依赖。
 
-进入 determineContextClass(sc) 函数
+# Bean 的一生
 
-```java
-protected Class<?> determineContextClass(ServletContext servletContext) {
-   // 此处CONTEXT_CLASS_PARAM = "contextClass"
-   String contextClassName = servletContext.getInitParameter(CONTEXT_CLASS_PARAM);
-   if (contextClassName != null) {
-         //若设置了contextClass则使用定义好的ContextClass。
-         return ClassUtils.forName(contextClassName, ClassUtils.getDefaultClassLoader());
-      }
-   else {
-      //此处获取的是在Spring源码中ContextLoader.properties中配置的org.springframework.web.context.support.XmlWebApplicationContext类。
-      contextClassName = defaultStrategies.getProperty(WebApplicationContext.class.getName());
-      return ClassUtils.forName(contextClassName, ContextLoader.class.getClassLoader());
-}
-```
+![1594635929486](https://raw.githubusercontent.com/Yang6149/typora-image/master/demo/202007/13/182530-722534.png)
 
-### 1.2 配置 WebApplicationContext
+### 1. Bean的实例化与BeanWrapper
 
- 进入configureAndReFreshWebApplicaitonContext函数。 
+通过反射相应的bean实例，或CGLIB动态字节码动态生成其子类。
 
-```java
-protected void configureAndRefreshWebApplicationContext(ConfigurableWebApplicationContext wac, ServletContext sc) {
-  //webapplicationContext设置servletContext.
-   wac.setServletContext(sc);
-   // 此处CONFIG_LOCATION_PARAM = "contextConfigLocation"，即读即取web.xm中配设置的contextConfigLocation参数值，获得spring bean的配置文件.
-   String configLocationParam = sc.getInitParameter(CONFIG_LOCATION_PARAM);
-   if (configLocationParam != null) {
-      //webApplicationContext设置配置文件路径设。
-      wac.setConfigLocation(configLocationParam);
-   }
-   //开始处理bean
-   wac.refresh();
-}
-```
+返回一个BeanWrapper 对象，作用是对某个Bean 进行包裹，然后对这个Bean进行操作，如设置或获取bean的相应属性值
 
-## 2. 解析 XML 文件
+### 2. 各色的Aware接口
 
-上面wac变量声明为ConfigurableWebApplicationContext类型，ConfigurableWebApplicationContext又继承了WebApplicationContext。
+检查该对象是否实现一系列以Aware命名结尾的接口定义。如果有的话就接口中规定的依赖注入给当前对象实例
 
-WebApplicationContext有很多实现类。 但从上面determineContextClass得知此处wac实际上是XmlWebApplicationContext类，因此进入XmlWebApplication类查看其继承的refresh()方法。
+![1594638754634](C:\Users\hasaki\AppData\Roaming\Typora\typora-user-images\1594638754634.png)
 
-沿方法调用栈一层层看下去。
+### 3. BeanPostProcessor
 
-```java
-public void refresh() throws BeansException, IllegalStateException {
-   synchronized (this.startupShutdownMonitor) {
-      //获取beanFactory
-      ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
-     // 实例化所有声明为非懒加载的单例bean 
-      finishBeanFactoryInitialization(beanFactory);
-    }
-}
-```
+包含两个方法`Object postProcessBeforeInitialization(Object bean ,String beanName)`和`Object postProcessAfterInitialization(Object bean ,String beanName)`分别迁至处理和后置处理会执行的方法
 
-获取 beanFactory
+ApplicationContext 对应的检测各种Aware，就是在这个前置处理器里进行的。
 
-```java
-protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
-     //初始化beanFactory
-     refreshBeanFactory();
-     return beanFactory;
-}
-```
+也是在这里，进行AOP
 
-beanFactory 初始化
+### 4. InitializingBean 和 init-method
 
-```java
-@Override
-protected final void refreshBeanFactory() throws BeansException {
-      DefaultListableBeanFactory beanFactory = createBeanFactory();
-      //加载bean定义
-      loadBeanDefinitions(beanFactory);
-      synchronized (this.beanFactoryMonitor) {
-      this.beanFactory = beanFactory;
-      }
-}
-```
+![1594639462211](C:\Users\hasaki\AppData\Roaming\Typora\typora-user-images\1594639462211.png)
 
- 加载bean。 
+调用过前置处理后，会检测对象是否实现了这个接口。如果是，就调用方法。进一步的调整对象状态
 
-```java
-protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) throws BeansException, IOException {
-   //创建XmlBeanDefinitionReader实例来解析XML配置文件
-   XmlBeanDefinitionReader beanDefinitionReader = new XmlBeanDefinitionReader(beanFactory);
-   initBeanDefinitionReader(beanDefinitionReader);
-   //解析XML配置文件中的bean。
-   loadBeanDefinitions(beanDefinitionReader);
-}
-```
+但是直接实现这个方法就显得代码入侵性太大，所以代替方法是<bean> 中的 init-method
 
-读取 XML 配置文件
+可以在 beans 标签中统一设置初始化方法
 
-```java
-protected void loadBeanDefinitions(XmlBeanDefinitionReader reader) throws IOException {
-//此处读取的就是之前设置好的web.xml中配置文件地址
-   String[] configLocations = getConfigLocations();
-   if (configLocations != null) {
-      for (String configLocation : configLocations) {
-         //调用XmlBeanDefinitionReader读取XML配置文件
-         reader.loadBeanDefinitions(configLocation);
-      }
-   }
-}
-```
+### 5. DisposableBean 与 destory-method
 
- XmlBeanDefinitionReader 读取 XML 文件中的 bean 定义。 
+检查 singleton 类型的bean实例，看其是否实现了 DisposableBean 接口，如果是就会为该实例注册一个用于对象销毁的回调，以便在这些singleton类型的对象实例销毁前，执行销毁逻辑。
 
-```java
-public int loadBeanDefinitions(String location, Set<Resource> actualResources) throws BeanDefinitionStoreException {
-   ResourceLoader resourceLoader = getResourceLoader();
-      Resource resource = resourceLoader.getResource(location);
-      //加载bean
-      int loadCount = loadBeanDefinitions(resource);
-      return loadCount;
-   }
-}
-```
+**其实和4 一样。**
 
- 继续查看loadBeanDefinitons函数调用栈，进入到XmlBeanDefinitioReader类的loadBeanDefinitions方法。 
+在BeanFactory中，我们需要自己调用destorySingletons()方法，不然之前实现的接口就形同虚设
 
-```java
-public int loadBeanDefinitions(EncodedResource encodedResource) throws BeanDefinitionStoreException {
-      //获取文件流
-      InputStream inputStream = encodedResource.getResource().getInputStream();
-      InputSource inputSource = new InputSource(inputStream);
-     //从文件流中加载定义好的bean。
-      return doLoadBeanDefinitions(inputSource, encodedResource.getResource());
-   }
-}
-```
+在ApplicationContext中，AbstratApplicationContext 有registerShutdownHook()方法，底层调用Runtime类的addShutdownHook()方法，在虚拟机退出前会执行。

@@ -101,6 +101,10 @@ volatile 相关实现、
 
   当我们声明某个变量为 volatile 修饰时，这个变量就有了线程可见性，volatile 通过在读写操作前后添加内存屏障。 
 
+**每个处理器通过嗅探在总线上传播的数据来检查自己的缓存值是不是过期了，如果处理器发现自己缓存行对应的内存地址呗修改，就会将当前处理器的缓存行设置无效状态**，当处理器对这个数据进行修改操作的时候，会重新从系统内存中把数据库读到处理器缓存中。
+
+由于Volatile的MESI缓存一致性协议，需要不断的从主内存嗅探和cas不断循环，无效交互会导致总线带宽达到峰值。**总线风暴**
+
 volatile 型变量拥有如下特性
 
 ```
@@ -231,6 +235,10 @@ Object obj = new Object();
 PhantomReference<Object> pf = new PhantomReference<Object>(obj, null);
 obj = null;
 ```
+
+虚引用必须和引用队列(ReferenceQueue)联合使用。当垃圾回收器准备回收一个对象时，如果发现它还有虚引用，就会在回收对象的内存之前，把这个虚引用加入到与之关联的引用队列中。
+
+比如Cleaner继承自虚引用可以跟踪DirectByteBuffer，当它被标记算法扫过后JVM 垃圾收集器会将此对象的引用放入到对象引用中的 pending 链表中，等待 Reference-Handler 进行相关处理（回收堆外内存）(由一个优先级很高的守护线程执行)。
 
 ### 垃圾收集算法
 
@@ -517,7 +525,7 @@ obj = null;
 
 #### 2. 验证
 
- 确保 Class 文件的字节流中包含的信息符合当前虚拟机的要求，并且不会危害虚拟机自身的安全。 
+ 确保 Class 文件的字节流中包含的信息符合当前虚拟机的约束，并且不会危害虚拟机自身的安全。 
 
 #### 3. 准备
 
@@ -626,7 +634,24 @@ System.out.println(ConstClass.HELLOWORLD);
 
  这里的相等，包括类的 Class 对象的 equals() 方法、isAssignableFrom() 方法、isInstance() 方法的返回结果为 true，也包括使用 instanceof 关键字做对象所属关系判定结果为 true。 
 
-### 类加载器分类？
+### 类加载器的概念
+
+一般来说，Java 虚拟机使用 Java 类的方式如下：Java 源程序（.java 文件）在经过 Java 编译器编译之后就被转换成 Java 字节代码（.class 文件）。类加载器负责根据类的名字找到并读取 Java 字节代码，并转换成 `java.lang.Class`类的一个实例。每个这样的实例用来表示一个 Java 类。通过此实例的 `newInstance()`方法就可以创建出该类的一个对象。有其他情况比如字节码是从网络中传输过来的。
+
+基本上所有的类加载器都是 `java.lang.ClassLoader`类的一个实例。
+
+类加载器的一些方法
+
+| 方法                                                   | 说明                                                         |
+| :----------------------------------------------------- | :----------------------------------------------------------- |
+| `getParent()`                                          | 返回该类加载器的父类加载器。                                 |
+| `loadClass(String name)`                               | 加载名称为 `name`的类，返回的结果是 `java.lang.Class`类的实例。 |
+| `findClass(String name)`                               | 查找名称为 `name`的类，返回的结果是 `java.lang.Class`类的实例。 |
+| `findLoadedClass(String name)`                         | 查找名称为 `name`的已经被加载过的类，返回的结果是 `java.lang.Class`类的实例。 |
+| `defineClass(String name, byte[] b, int off, int len)` | 把字节数组 `b`中的内容转换成 Java 类，返回的结果是 `java.lang.Class`类的实例。这个方法被声明为 `final`的。 |
+| `resolveClass(Class<?> c)`                             | 链接指定的 Java 类。                                         |
+
+### 类加载器分类
 
  从 Java 虚拟机的角度来讲，只存在以下两种不同的类加载器： 
 
@@ -635,9 +660,13 @@ System.out.println(ConstClass.HELLOWORLD);
 
  从 Java 开发人员的角度看，类加载器可以划分得更细致一些： 
 
-- 启动类加载器（Bootstrap ClassLoader）此类加载器负责将存放在 <JRE_HOME>\lib 目录中的，或者被 -Xbootclasspath 参数所指定的路径中的，并且是虚拟机识别的（仅按照文件名识别，如 rt.jar，名字不符合的类库即使放在 lib 目录中也不会被加载）类库加载到虚拟机内存中。启动类加载器无法被 Java 程序直接引用，用户在编写自定义类加载器时，如果需要把加载请求委派给启动类加载器，直接使用 null 代替即可。
-- 扩展类加载器（Extension ClassLoader）这个类加载器是由 ExtClassLoader（sun.misc.Launcher$ExtClassLoader）实现的。它负责将 <JAVA_HOME>/lib/ext 或者被 java.ext.dir 系统变量所指定路径中的所有类库加载到内存中，开发者可以直接使用扩展类加载器。
-- 应用程序类加载器（Application ClassLoader）这个类加载器是由 AppClassLoader（sun.misc.Launcher$AppClassLoader）实现的。由于这个类加载器是 ClassLoader 中的 getSystemClassLoader() 方法的返回值，因此一般称为系统类加载器。它负责加载用户类路径（ClassPath）上所指定的类库，开发者可以直接使用这个类加载器，如果应用程序中没有自定义过自己的类加载器，一般情况下这个就是程序中默认的类加载器。
+- 引导类加载器（bootstrap class loader）：它用来加载 Java 的核心库，是用原生代码来实现的，并不继承自 `java.lang.ClassLoader`。
+- 扩展类加载器（extensions class loader）：它用来加载 Java 的扩展库。Java 虚拟机的实现会提供一个扩展库目录。该类加载器在此目录里面查找并加载 Java 类。
+- 系统类加载器（system class loader）：它根据 Java 应用的类路径（CLASSPATH）来加载 Java 类。一般来说，Java 应用的类都是由它来完成加载的。可以通过 `ClassLoader.getSystemClassLoader()`来获取它。
+
+> java和javax都是Java的API包，java是核心包，javax的x是extension的意思，也就是扩展包。
+
+同样我们也可以自己实现类加载器并继承自系统类加载器或自己写的其他类加载器
 
 ### 双亲委派模型
 
@@ -655,9 +684,11 @@ System.out.println(ConstClass.HELLOWORLD);
 
  使得 Java 类随着它的类加载器一起具有一种带有优先级的层次关系，从而使得基础类得到统一。 
 
- 例如 java.lang.Object 存放在 rt.jar 中，如果编写另外一个 java.lang.Object 并放到 ClassPath 中，程序可以编译通过。由于双亲委派模型的存在，所以在 rt.jar 中的 Object 比在 ClassPath 中的 Object 优先级更高，这是因为 rt.jar 中的 Object 使用的是启动类加载器，而 ClassPath 中的 Object 使用的是应用程序类加载器。rt.jar 中的 Object 优先级更高，那么程序中所有的 Object 都是这个 Object。 
+ 例如 java.lang.Object 存放在 rt.jar 中，如果编写另外一个 java.lang.Object 并放到 ClassPath 中，程序可以编译通过。由于双亲委派模型的存在，所以在 rt.jar 中的 Object 比在 ClassPath 中的 Object 优先级更高，这是因为 rt.jar 中的 Object 使用的是启动类加载器，而 ClassPath 中的 Object 使用的是应用程序类加载器。rt.jar 中的 Object 优先级更高，那么程序中所有的 Object 都是这个 java.lang.Object。 **断了Coder修改核心库的机会**
 
-热部署、代码隔离（解决包冲突）、代码加密
+真正完成类的加载工作是通过调用 `defineClass`来实现的；而启动类的加载过程是通过调用 `loadClass`来实现的。前者称为一个类的定义加载器（defining loader），后者称为初始加载器（initiating loader）。在 Java 虚拟机判断两个类是否相同的时候，使用的是类的定义加载器。
+
+热部署、代码隔离（解决包冲突，需破坏）、代码加密
 
 #### 3. 实现
 
@@ -755,6 +786,28 @@ public class FileSystemClassLoader extends ClassLoader {
     }
 }
 ```
+
+### Tomcat 类加载机制
+
+因为Tomcat是个web容器，可以满足同时运行多个应用程序。那么我们就会出现一些问题如：运行的多个引用程序引用同一个第三方库如Spring。应用1引入Spring4.0、应用2引入Spring5.0。那么就需要把两个的运行环境隔离起来，至少要Spring4.0和5.0都能加载进方法区。然后应用1通过类加载器拿到的类是4.0，应用2拿到的是5.0。
+
+我们还要满足两个应用在获取Java核心库和tomcat核心库时，拿到的是相同的。意思方法区中只有一份。
+
+tomcat是通过构造出了自己的类加载器结构如图：
+
+![1593174991420](https://raw.githubusercontent.com/Yang6149/typora-image/master/demo/202006/26/203633-924930.png)
+
+每个应用都是通过WebAppClassLoader的实例进行加载类的。WebAppClassLoader会先检查自己有没有加载过这个类，如果没有就让BootstrapLoader去加载。无法加载就自己加载。自己也无法加载就委托SharedClassLoader去加载，SharedClassLoader是符合双亲委派模型的，一级级向上调用就完事了。
+
+如应用1，它会有一个WebAppClassLoader的实例，就要loader1吧。
+
+1. loader1想要加载java.lang.Object那么它显然没有加载过，就去调用BootStrapLoader去加载，然后BootStrapLoader检查一下发现自己加载过了，就直接返回。
+
+2. loader1想要加载java.util.List。其实和上一步一模一样，只是可能还没加载，但还是BootStrapLoader去加载。
+3. loader1想要加载自己路径的类。那么就沿着上面的路线走到WebAppClassLoader，自己直接去加载。返回。
+4. loader1想要加载第三方库的类。就沿着上面路线走到了SharedClassLoader，然后走正经的双亲委派SharedClassLoader->CommonClassLoader->ApplicationClassLoader
+
+
 
 # 参考资料
 

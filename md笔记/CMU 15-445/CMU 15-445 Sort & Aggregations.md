@@ -49,6 +49,10 @@ hash 相比 排序要快得多。分为两个不知 partition 和 ReHash
 
 * ReHash
 
-  一个一个的读取partition ，Hash2构建一个Hash 表，在这一步我们可以进行聚合操作比如求平均数
+  一个一个的读取partition ，为每一个 partitionHash2构建一个Hash 表，在这一步我们可以进行聚合操作比如求平均数，然后把数据写入 Result Table 中。
 
-  ![1590072242296](C:\Users\hasaki\AppData\Roaming\Typora\typora-user-images\1590072242296.png)
+  ![1590072242296](https://raw.githubusercontent.com/Yang6149/typora-image/master/demo/202005/22/143040-372324.png)
+
+我们进行这两步的目的是因为一个表太大了，不进行分区而直接输出 Result Table，内存放不下，所以我们先把它们按照相同 Key 分开。然后再挨个partition的去读取以及处理数据。
+
+![1590129219614](https://raw.githubusercontent.com/Yang6149/typora-image/master/demo/202005/22/143340-889534.png)

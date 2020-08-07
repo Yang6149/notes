@@ -1,4 +1,12 @@
-# CAP理论
+# CAP
+
+CAP分为口嗨及严格定理
+
+口嗨：可以是定义模糊、涵盖广泛、启发分布式系统设计的原则
+
+定理：属于每个性质都有严格数学定义、结论有完善推导的**理论计算科学**范畴的概念
+
+我们经常说的大概就是口嗨类型的。
 
 ## CAP 理论概述
 
@@ -10,7 +18,7 @@
 
 ### Consistency 一致性
 
-“`all nodes see the same data at the same time`”
+“`Consistent is: “Atomic, linearizable, consistency [...]. There must exist a total order on all operations such that each operation looks as if it were completed at a single instant. This is equivalent to requiring requests of the distributed shared memory to act as if they were executing on a single node, responding to operations one at a time.”`”
 
 一致性指所有节点在同一时间的数据完全一致。这是在多个数据拷贝下进行并发读写时会出现的问题。
 
@@ -32,17 +40,19 @@
 
 ### Availability 可用性
 
-“`Reads and writes always succeed`”
+“`Available is: “For a distributed system to be continuously available, every request received by a non-failing node in the system must result in a response.”`”
 
-好的可用性指服务能够很好的为用户服务，不出现用户操作失败或者访问超时等情况。可用性通常情况下可用性和分布式数据冗余，负载均衡等有很大的关系。
+去任何一个没有失败的节点的请求，系统一定要给一个成功应答。
 
 ### Partition Tolerance 分区容错性
 
-“`the system continues to operate despite arbitrary message loss or failure of part of the system`”
+“`Partition is: “The network will be allowed to lose arbitrarily many messages sent from one node to another. When a network is partitioned, all messages sent from nodes in one component of the partition to nodes in another component are lost.”`”
 
 在任意节点挂掉或者消息丢失的情况下，系统还能够运行。
 
-##  CAP 的证明
+##  CAP 定理的证明
+
+[论文地址](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.67.6951&rep=rep1&type=pdf)
 
 ![1585632687286](https://raw.githubusercontent.com/Yang6149/typora-image/master/demo/202003/31/133128-626567.png)
 
@@ -59,6 +69,32 @@
   还是拿上一行举例子，我们想满足可用性，就是访问N2读取数据的时候一定成功，并且能拿到数据，但这个时候拿到的数据就不是client1传向N1的数据，因为还没同步，所以不满足一致性。
 
 ## CAP 权衡
+
+引用DDIA作者的一些话。
+
+> #### **CAP**定理没有帮助 
+>
+> CAP有时以这种面目出现：一致性，可用性和分区容忍：三者只能择其二。不幸的是这 
+>
+> 种说法很有误导性，因为网络分区是一种错误，所以它并不是一个选项：不管你 
+>
+> 喜不喜欢它都会发生。 
+>
+> 在网络正常工作的时候，系统可以提供一致性（线性一致性）和整体可用性。发生网络 
+>
+> 故障时，你必须在线性一致性和整体可用性之间做出选择。因此，一个更好的表达CAP 
+>
+> 的方法可以是一致的，或者在分区时可用。一个更可靠的网络需要减少这个选 
+>
+> 择，但是在某些时候选择是不可避免的。 
+>
+> 在CAP的讨论中，术语可用性有几个相互矛盾的定义，形式化作为一个定理并不 
+>
+> 符合其通常的含义。许多所谓的“高可用”（容错）系统实际上不符合CAP对可用 
+>
+> 性的特殊定义。总而言之，围绕着CAP有很多误解和困惑，并不能帮助我们更好地理解 
+>
+> 系统，所以最好避免使用CAP。
 
 * CA without P
 
